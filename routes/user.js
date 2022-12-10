@@ -8,22 +8,6 @@ const bcrypt = require('bcrypt')
 const {User} = require('../models/db')
 
 
-const signToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
-
-const createSendToken = (user, statusCode, res) => {
-  const token = signToken(user.email);
-  res.status(statusCode).json({
-    status: "success",
-    token,
-    data: {
-      user,
-    },
-  });
-};
-
 
 router.post('/register',async(req,res) => {
     if (!req.body.email) {
@@ -57,38 +41,47 @@ router.post('/register',async(req,res) => {
           email: req.body.email,
           password: hashedPassword,
         });
-    
-        createSendToken(newUser, 201, res);
-      } catch (error) {
-        console.error(error);
+  
+
       }
+      catch (error) {
+        console.error(error);
+        }
+        email = req.body.email
+        const token =   jwt.sign({ email }, process.env.JWT_SECRET, {
+            expiresIn: process.env.JWT_EXPIRES_IN,
+                });
+    res.cookie('token',token,{expiresIn:'1hr'})
+
+    return res.header('x-auth-token',token).json({status:'ok', user:token,message:'successfull registration and login'});
+
 });
 
 router.post('/login',async (req,res) => {
-    const { email, password } = req.body;
+    // const { email, password } = req.body;
 
-    if (!email || !password) {
+    // if (!email || !password) {
 
-      return res.status(401).json({
-        status: "failed",
-        message: "did not provide password or email",
-      });
-    }
+    //   return res.status(401).json({
+    //     status: "failed",
+    //     message: "did not provide password or email",
+    //   });
+    // }
 
-    try {
-      const user = await User.findByPk(email);
+    // try {
+    //   const user = await User.findByPk(email);
   
-      if (!user || !(await bcrypt.compare(password, user.password))) {
-        return res.status(401).json({
-          status: "failed",
-          message: "incorrect email or password",
-        });
-      }
+    //   if (!user || !(await bcrypt.compare(password, user.password))) {
+    //     return res.status(401).json({
+    //       status: "failed",
+    //       message: "incorrect email or password",
+    //     });
+    //   }
   
-    createSendToken(user, 200, res);
-    } catch (error) {
-      console.error(error);
-    }
+    // createSendToken(user, 200, res);
+    // } catch (error) {
+    //   console.error(error);
+    // }
     
 });
 
